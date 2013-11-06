@@ -106,14 +106,21 @@ class Scenario(object):
             self.sizes_by_name[size_data_copy['name']] = size_data_copy
             crud_profile = size_data_copy.get(
                 'crud_profile', self._scenario_data['crud_profile'])
+
+            # add profile for list to keep backward compatibility
+            while len(crud_profile) < 5:
+                tmp = list(crud_profile)
+                tmp.append(0)
+                crud_profile = tmp
+
             crud_total = sum(crud_profile)
             size_data_copy['crud_pcts'] = [
                 float(c) / crud_total * 100 for c in crud_profile]
             # Calculate probability thresholds for each CRUD element for this
             # object size category (defaulting to global crud profile).
-            size_data_copy['crud_thresholds'] = [1, 1, 1, 1]
+            size_data_copy['crud_thresholds'] = [1, 1, 1, 1, 1]
             self._thresholds_for(size_data_copy['crud_thresholds'],
-                                 range(4), crud_profile)
+                                 range(5), crud_profile)
 
         # Calculate probability thresholds for each size (from the
         # initial_files)
@@ -221,6 +228,8 @@ class Scenario(object):
                     self.sizes_by_name[size_str]['size_max']))
         elif crud_index == 3:
             return self.job(size_str, type=ssbench.DELETE_OBJECT)
+        elif crud_index == 4:
+            return self.job(size_str, type=ssbench.LIST_OBJECT)
 
     def initial_jobs(self):
         """

@@ -1,0 +1,17 @@
+{
+  "name": "List only test scenario",
+  "sizes": [{
+    "name": "tiny",
+    "size_min": 4096,
+    "size_max": 8192
+  }],
+  "initial_files": {
+    "tiny": 1000
+  },
+  "operation_count": 500,
+  "crud_profile": [0, 0, 0, 0, 1],
+  "user_count": 4,
+  "container_base": "ssbench",
+  "container_count": 10,
+  "container_concurrency": 10
+}

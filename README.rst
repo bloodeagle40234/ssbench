@@ -135,9 +135,9 @@ defining a benchmark run.  Specifically, it defines:
   size (in bytes), and an
   optional ``crud_profile`` for just this size.  If ``crud_profile`` is not
   given for a size, the top-level ``crud_profile`` will be used.  The
-  ``crud_profile`` here is just like the top-level one, an array of 4 numbers
+  ``crud_profile`` here is just like the top-level one, an array of 5 numbers
   whose relative sizes determine the percent chance of a Create, Read, Update,
-  or Delete operation.  Objects created or updated within an object size
+  Delete or List operation.  Objects created or updated within an object size
   class will have a size (in bytes) chosen at random uniformly between the
   minimum and maximum sizes.
 - An ``initial_files`` dictionary of initial file-counts per size class.  Each
@@ -161,8 +161,8 @@ defining a benchmark run.  Specifically, it defines:
   should be specified.  Both values may be overridden with command-line
   arguments to ``ssbench-master``.
 - A ``crud_profile`` which determines the distribution of each kind of operation.
-  For instance, ``[3, 4, 2, 2]`` would mean 27% CREATE, 36% READ, 18% UPDATE,
-  and 18% DELETE.
+  For instance, ``[3, 4, 2, 2, 2]`` would mean 23% CREATE, 31% READ, 15% UPDATE,
+  , 15% DELETE and 15% LIST.
 - A ``user_count`` which determines the maxiumum client concurrency during the
   benchmark run.  The user is responsible for ensuring there are enough workers
   running to support the scenario's defined ``user_count``.  (Each
@@ -452,11 +452,11 @@ command.  Simply use the ``--workers COUNT`` option to ``ssbench-master``::
   Worker count:   2   Concurrency:   4  Ran 2013-06-07 17:23:16 UTC to 2013-06-07 17:23:22 UTC (5s)
   Object expiration (X-Delete-After): None (sec)
 
-  % Ops    C   R   U   D       Size Range       Size Name
-   91%   % 10  75  15   0        4 kB -   8 kB  tiny
-    9%   % 10  75  15   0       20 kB -  40 kB  small
+  % Ops    C   R   U   D   L       Size Range       Size Name
+   91%   % 10  75  15   0   0        4 kB -   8 kB  tiny
+    9%   % 10  75  15   0   0       20 kB -  40 kB  small
   ---------------------------------------------------------------------
-           10  75  15   0      CRUD weighted average
+           10  75  15   0   0      CRUD weighted average
 
   TOTAL
          Count:   613  (   0 error;    0 retries:  0.00%)  Average requests per second: 118.7

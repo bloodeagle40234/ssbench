@@ -68,6 +68,8 @@ class RunState(object):
                 return None
         if obj_info:
             job['container'], job['name'], _ = obj_info
+        if job['type'] == ssbench.LIST_OBJECT:
+            del job['name']
         return job
 
     def cleanup_object_infos(self):

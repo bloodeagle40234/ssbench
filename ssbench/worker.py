@@ -141,7 +141,7 @@ class Worker(object):
             job_data = msgpack.loads(jobs, use_list=False)
             for job_datum in job_data:
                 try:
-                    if 'container' in job_datum:
+                    if 'container' in job_datum and 'name' in job_datum:
                         logging.debug('WORK: %13s %s/%-17s',
                                       job_datum['type'],
                                       job_datum['container'],
@@ -238,10 +238,9 @@ class Worker(object):
     def ignoring_http_responses(self, statuses, fn, call_info, **extra_keys):
         if 401 not in statuses:
             statuses += (401,)
-        args = dict(
-            container=call_info['container'],
-            name=call_info['name'],
-        )
+        args = dict(container=call_info['container'])
+        if 'name' in call_info:
+            args.update({'name': call_info['name']})
         args.update(extra_keys)
 
         if 'auth_kwargs' not in call_info:
@@ -302,6 +301,8 @@ class Worker(object):
                 fn_results = None
                 with self.connection(args['url']) as conn:
                     fn_results = fn(http_conn=conn, **args)
+                    if type(fn_results) is tuple:
+                        fn_results, _trash = fn_results
                 if fn_results:
                     if tries != 0:
                         logging.info('%r succeeded after %d tries',
@@ -384,6 +385,8 @@ class Worker(object):
         object_info.pop('auth_kwargs', None)
         object_info.pop('head_first', None)
         object_info.pop('block_size', None)
+        if not 'name' in object_info:
+            object_info.update({'name': None})
         self.put_results(
             object_info,
             first_byte_latency=resp_headers.get(
@@ -443,4 +446,9 @@ class Worker(object):
         headers = self.ignoring_http_responses(
             (404, 503), client.get_object, object_info,
             resp_chunk_size=object_info.get('block_size', DEFAULT_BLOCK_SIZE))
+        self._put_results_from_response(object_info, headers)
+
+    def handle_list_object(self, object_info):
+        headers = self.ignoring_http_responses(
+            (503,), client.get_container, object_info)
         self._put_results_from_response(object_info, headers)

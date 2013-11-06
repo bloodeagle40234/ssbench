@@ -73,6 +73,11 @@ class TestReporterBase(ScenarioFixture, TestCase):
                  3, ssbench.READ_OBJECT, 'medium', 103.9, 104.2, 104.3, 0),
              self.gen_result(
                  3, ssbench.UPDATE_OBJECT, 'tiny', 104.3, 104.9, 104.999, 0)],
+            # list_object rsults
+            [self.gen_result(
+                1, ssbench.LIST_OBJECT, 'small', 105.0, 105.1, 105.2, 0),
+             self.gen_result(
+                 2, ssbench.LIST_OBJECT, 'tiny', 102.1, 102.3, 102.4, 0)],
         ]
         self.run_results = MagicMock()
         self.run_results.read_results.return_value = (self.scenario,
@@ -121,8 +126,8 @@ class TestReporter(TestReporterBase):
                 tiny=300, small=400, medium=500, large=200, huge=70,
             ),
             operation_count=5000,
-            #             C  R  U  D
-            crud_profile=[5, 3, 1, 1],
+            #             C  R  U  D  L
+            crud_profile=[5, 2, 1, 1, 1],
             user_count=2,
             delete_after=None,
         )
@@ -193,12 +198,12 @@ class TestReporter(TestReporterBase):
             some_stats)
 
     def test_calculate_scenario_stats_per_worker(self):
-        req_counts = [4, 4, 4]
+        req_counts = [5, 5, 4]
         self.assertDictEqual(dict(
             min='%6.3f' % 4,
-            max='%7.3f' % 4,
+            max='%7.3f' % 5,
             avg='%7.3f' % _round(stats.lmean(req_counts), 3),
-            pctile='%7.3f' % 4,
+            pctile='%7.3f' % 5,
             std_dev='%7.3f' % _round(
                 stats.lsamplestdev(req_counts), 3),
             median='%7.3f' % _round(
@@ -207,14 +212,14 @@ class TestReporter(TestReporterBase):
 
     def test_calculate_scenario_stats_aggregate(self):
         first_byte_latency_all = [1, 0.1, 1.2, 0.2, 0.8, 0.1, 0.1,
-                                  0.2, 1, 0.5, 0.3, 0.6]
+                                  0.2, 1, 0.5, 0.3, 0.6, 0.1, 0.2]
         last_byte_latency_all = [3, 0.8, 2.2, 0.3, 2.8, 0.4, 0.2,
-                                 0.5, 1.8, 0.8, 0.4, 0.699]
+                                 0.5, 1.8, 0.8, 0.4, 0.699, 0.2, 0.3]
         self.assertDictEqual(dict(
-            worker_count=3, start=100.0, stop=152.2, req_count=12,
+            worker_count=3, start=100.0, stop=152.2, req_count=14,
             retries=7, errors=1,
-            retry_rate=_round(7.0 / 12 * 100, 6),
-            avg_req_per_sec=_round(12 / (152.2 - 100), 6),
+            retry_rate=_round(7.0 / 14 * 100, 6),
+            avg_req_per_sec=_round(14 / (152.2 - 100), 6),
             first_byte_latency=dict(
                 min='%6.3f' % 0.1,
                 max='%7.3f' % 1.2,
@@ -241,17 +246,17 @@ class TestReporter(TestReporterBase):
 
     def test_calculate_scenario_stats_aggregate_low_pctile(self):
         first_byte_latency_all = [1, 0.1, 1.2, 0.2, 0.8, 0.1, 0.1,
-                                  0.2, 1, 0.5, 0.3, 0.6]
+                                  0.2, 1, 0.5, 0.3, 0.6, 0.1, 0.2]
         last_byte_latency_all = [3, 0.8, 2.2, 0.3, 2.8, 0.4, 0.2,
-                                 0.5, 1.8, 0.8, 0.4, 0.699]
+                                 0.5, 1.8, 0.8, 0.4, 0.699, 0.2, 0.3]
 
         self.reporter.read_results(nth_pctile=20)
 
         self.assertDictEqual(dict(
-            worker_count=3, start=100.0, stop=152.2, req_count=12,
+            worker_count=3, start=100.0, stop=152.2, req_count=14,
             retries=7, errors=1,
-            retry_rate=_round(7.0 / 12 * 100, 6),
-            avg_req_per_sec=_round(12 / (152.2 - 100), 6),
+            retry_rate=_round(7.0 / 14 * 100, 6),
+            avg_req_per_sec=_round(14 / (152.2 - 100), 6),
             first_byte_latency=dict(
                 min='%6.3f' % 0.1,
                 max='%7.3f' % 1.2,
@@ -277,12 +282,12 @@ class TestReporter(TestReporterBase):
         ), self.reporter.stats['agg_stats'])
 
     def test_calculate_scenario_stats_worker1(self):
-        w1_first_byte_latency = [1.0, 0.1, 1.2, 0.2]
-        w1_last_byte_latency = [3.0, 0.8, 2.2, 0.3]
+        w1_first_byte_latency = [1.0, 0.1, 1.2, 0.2, 0.1]
+        w1_last_byte_latency = [3.0, 0.8, 2.2, 0.3, 0.2]
         self.assertDictEqual(dict(
-            start=100.0, stop=106.4, req_count=4,
+            start=100.0, stop=106.4, req_count=5,
             retries=0, retry_rate=0.0, errors=0,
-            avg_req_per_sec=_round(4 / (106.4 - 100), 6),
+            avg_req_per_sec=_round(5 / (106.4 - 100), 6),
             first_byte_latency=dict(
                 min='%6.3f' % min(w1_first_byte_latency),
                 max='%7.3f' % max(w1_first_byte_latency),
@@ -310,13 +315,13 @@ class TestReporter(TestReporterBase):
         ), self.reporter.stats['worker_stats'][1])
 
     def test_calculate_scenario_stats_worker2(self):
-        w2_first_byte_latency = [0.8, 0.1, 0.1, 0.2]
-        w2_last_byte_latency = [2.8, 0.4, 0.2, 0.5]
+        w2_first_byte_latency = [0.8, 0.1, 0.1, 0.2, 0.2]
+        w2_last_byte_latency = [2.8, 0.4, 0.2, 0.5, 0.3]
         self.assertDictEqual(dict(
-            start=100.1, stop=152.2, req_count=4,
+            start=100.1, stop=152.2, req_count=5,
             retries=7, errors=1,
-            retry_rate=_round(7.0 / 4 * 100, 6),
-            avg_req_per_sec=_round(4 / (152.2 - 100.1), 6),
+            retry_rate=_round(7.0 / 5 * 100, 6),
+            avg_req_per_sec=_round(5 / (152.2 - 100.1), 6),
             first_byte_latency=dict(
                 min='%6.3f' % min(w2_first_byte_latency),
                 max='%7.3f' % max(w2_first_byte_latency),
@@ -739,50 +744,124 @@ class TestReporter(TestReporterBase):
                            'stop': 103.3})]),
         ), self.reporter.stats['op_stats'][ssbench.DELETE_OBJECT])
 
+    def test_calculate_scenario_stats_list(self):
+        l_first_byte_latency = [0.1, 0.2]
+        l_last_byte_latency = [0.2, 0.3]
+        self.assertDictEqual(dict(
+            start=102.1, stop=105.2, req_count=2,
+            retries=0, retry_rate=0.0, errors=0,
+            avg_req_per_sec=_round(2 / (105.2 - 102.1), 6),
+            first_byte_latency=dict(
+                min='%6.3f' % min(l_first_byte_latency),
+                max='%7.3f' % max(l_first_byte_latency),
+                pctile='%7.3f' % max(l_first_byte_latency),
+                avg='%7.3f' % _round(stats.lmean(l_first_byte_latency), 3),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(l_first_byte_latency), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(l_first_byte_latency), 3),
+            ),
+            last_byte_latency=dict(
+                min='%6.3f' % min(l_last_byte_latency),
+                max='%7.3f' % max(l_last_byte_latency),
+                pctile='%7.3f' % max(l_last_byte_latency),
+                avg='%7.3f' % _round(stats.lmean(l_last_byte_latency), 3),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(l_last_byte_latency), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(l_last_byte_latency), 3),
+            ),
+            worst_first_byte_latency=(max(l_first_byte_latency), 'txID015'),
+            worst_last_byte_latency=(max(l_last_byte_latency), 'txID015'),
+            size_stats=OrderedDict([
+                ('tiny', {'avg_req_per_sec': 3.333333,
+                          'first_byte_latency': {'avg': '%7.3f' % 0.2,
+                                                 'max': '%7.3f' % 0.2,
+                                                 'pctile': '%7.3f' % 0.2,
+                                                 'median': '%7.3f' % 0.2,
+                                                 'min': '%6.3f' % 0.2,
+                                                 'std_dev': '%7.3f' % 0.0},
+                          'last_byte_latency': {'avg': '%7.3f' % 0.3,
+                                                'max': '%7.3f' % 0.3,
+                                                'pctile': '%7.3f' % 0.3,
+                                                'median': '%7.3f' % 0.3,
+                                                'min': '%6.3f' % 0.3,
+                                                'std_dev': '%7.3f' % 0.0},
+                          'worst_first_byte_latency': (0.2, 'txID015'),
+                          'worst_last_byte_latency': (0.3, 'txID015'),
+                          'req_count': 1,
+                          'retries': 0,
+                          'retry_rate': 0.0,
+                          'errors': 0,
+                          'start': 102.1,
+                          'stop': 102.4}),
+                ('small', {'avg_req_per_sec': 5,
+                           'first_byte_latency': {'avg': '%7.3f' % 0.1,
+                                                  'max': '%7.3f' % 0.1,
+                                                  'pctile': '%7.3f' % 0.1,
+                                                  'median': '%7.3f' % 0.1,
+                                                  'min': '%6.3f' % 0.1,
+                                                  'std_dev': '%7.3f' % 0.0},
+                           'last_byte_latency': {'avg': '%7.3f' % 0.2,
+                                                 'max': '%7.3f' % 0.2,
+                                                 'pctile': '%7.3f' % 0.2,
+                                                 'median': '%7.3f' % 0.2,
+                                                 'min': '%6.3f' % 0.2,
+                                                 'std_dev': '%7.3f' % 0.0},
+                           'worst_first_byte_latency': (0.1, 'txID014'),
+                           'worst_last_byte_latency': (0.2, 'txID014'),
+                           'req_count': 1,
+                           'retries': 0,
+                           'retry_rate': 0.0,
+                           'errors': 0,
+                           'start': 105.0,
+                           'stop': 105.2})]),
+        ), self.reporter.stats['op_stats'][ssbench.LIST_OBJECT])
+
     def test_calculate_scenario_size_stats(self):
         self.assertDictEqual(OrderedDict([
-            ('tiny', {'avg_req_per_sec': 0.816493,
-                      'first_byte_latency': {'avg': '%7.3f' % 0.45,
+            ('tiny', {'avg_req_per_sec': 1.020616,
+                      'first_byte_latency': {'avg': '%7.3f' % 0.40,
                                              'max': '%7.3f' % 1.0,
                                              'pctile': '%7.3f' % 1.0,
-                                             'median': '%7.3f' % 0.35,
+                                             'median': '%7.3f' % 0.20,
                                              'min': '%6.3f' % 0.1,
-                                             'std_dev': '%7.3f' % 0.377492},
-                      'last_byte_latency': {'avg': '%7.3f' % 0.87475,
+                                             'std_dev': '%7.3f' % 0.352},
+                      'last_byte_latency': {'avg': '%7.3f' % 0.76,
                                             'max': '%7.3f' % 1.8,
                                             'pctile': '%7.3f' % 1.8,
-                                            'median': '%7.3f' % 0.750,
+                                            'median': '%7.3f' % 0.699,
                                             'min': '%6.3f' % 0.2,
-                                            'std_dev': '%7.3f' % 0.580485},
+                                            'std_dev': '%7.3f' % 0.568},
                       'worst_first_byte_latency': (1.0, 'txID010'),
                       'worst_last_byte_latency': (1.8, 'txID010'),
-                      'req_count': 4,
+                      'req_count': 5,
                       'retries': 1,
-                      'retry_rate': 25.0,
+                      'retry_rate': 20.0,
                       'errors': 0,
                       'start': 100.1,
                       'stop': 104.999}),
-            ('small', {'avg_req_per_sec': 0.75,
-                       'first_byte_latency': {'avg': '%7.3f' % 0.566667,
+            ('small', {'avg_req_per_sec': 0.769231,
+                       'first_byte_latency': {'avg': '%7.3f' % 0.45,
                                               'max': '%7.3f' % 1.0,
                                               'pctile': '%7.3f' % 1.0,
-                                              'median': '%7.3f' % 0.5,
-                                              'min': '%6.3f' % 0.2,
-                                              'std_dev': '%7.3f' % 0.329983},
-                       'last_byte_latency': {'avg': '%7.3f' % 1.433333,
+                                              'median': '%7.3f' % 0.35,
+                                              'min': '%6.3f' % 0.1,
+                                              'std_dev': '%7.3f' % 0.35},
+                       'last_byte_latency': {'avg': '%7.3f' % 1.125,
                                              'max': '%7.3f' % 3.0,
                                              'pctile': '%7.3f' % 3.0,
-                                             'median': '%7.3f' % 0.8,
-                                             'min': '%6.3f' % 0.5,
-                                             'std_dev': '%7.3f' % 1.11455},
+                                             'median': '%7.3f' % 0.65,
+                                             'min': '%6.3f' % 0.2,
+                                             'std_dev': '%7.3f' % 1.103},
                        'worst_first_byte_latency': (1.0, 'txID002'),
                        'worst_last_byte_latency': (3.0, 'txID002'),
-                       'req_count': 3,
+                       'req_count': 4,
                        'retries': 0,
                        'retry_rate': 0.0,
                        'errors': 0,
                        'start': 100.0,
-                       'stop': 104.0}),
+                       'stop': 105.2}),
             ('medium', {'avg_req_per_sec': 0.47619,
                         'first_byte_latency': {'avg': '%7.3f' % 0.55,
                                                'max': '%7.3f' % 0.8,
@@ -854,7 +933,7 @@ class TestReporter(TestReporterBase):
             start=101,
             start_time=99.19999999999999,
             stop=106,
-            data=[1, 1, 5, 3, 0, 2],
+            data=[1, 2, 5, 3, 1, 2],
         ), self.reporter.stats['time_series'])
 
     def test_write_rps_histogram(self):
@@ -868,10 +947,10 @@ class TestReporter(TestReporterBase):
         self.assertListEqual([
             ["Seconds Since Start", "Requests Completed"],
             ['1', '1'],
-            ['2', '1'],
+            ['2', '2'],
             ['3', '5'],
             ['4', '3'],
-            ['5', '0'],
+            ['5', '1'],
             ['6', '2'],
         ], list(reader))
 
@@ -885,25 +964,25 @@ Reporter Test Scenario - ablkei  (generated with ssbench version 0.2.14)
 Worker count:   3   Concurrency:   2  Ran 1970-01-01 00:01:39 UTC to 1970-01-01 00:01:46 UTC (7s)
 Object expiration (X-Delete-After): None (sec)
 
-% Ops    C   R   U   D       Size Range       Size Name
- 20%   % 50  30  10  10       99  B - 100  B  tiny
- 27%   % 71   9  12   8        2 kB           small
- 34%   % 50  30  10  10        3 kB -   3 kB  medium
-  0%   % 50  30  10  10       10 MB           unused
- 14%   % 16  61   7  16      399 kB - 400 kB  large
-  5%   % 50  30  10  10       50 MB -  71 MB  huge
+% Ops    C   R   U   D   L       Size Range       Size Name
+ 20%   % 50  20  10  10  10       99  B - 100  B  tiny
+ 27%   % 71   9  12   8   0        2 kB           small
+ 34%   % 50  20  10  10  10        3 kB -   3 kB  medium
+  0%   % 50  20  10  10  10       10 MB           unused
+ 14%   % 16  61   7  16   0      399 kB - 400 kB  large
+  5%   % 50  20  10  10  10       50 MB -  71 MB  huge
 ---------------------------------------------------------------------
-         51  29  10  10      CRUD weighted average
+         51  23  10  10   6      CRUD weighted average
 
 TOTAL
-       Count:    12 (    1 error;     7 retries: 58.33%)  Average requests per second:   0.2
+       Count:    14 (    1 error;     7 retries: 50.00%)  Average requests per second:   0.3
                             min       max      avg      std_dev  50%-ile                   Worst latency TX ID
-       First-byte latency:  0.100 -   1.200    0.508  (  0.386)    0.400  (all obj sizes)  txID004
-       Last-byte  latency:  0.200 -   3.000    1.158  (  0.970)    0.750  (all obj sizes)  txID002
-       First-byte latency:  0.100 -   1.000    0.450  (  0.377)    0.350  (    tiny objs)  txID010
-       Last-byte  latency:  0.200 -   1.800    0.875  (  0.580)    0.750  (    tiny objs)  txID010
-       First-byte latency:  0.200 -   1.000    0.567  (  0.330)    0.500  (   small objs)  txID002
-       Last-byte  latency:  0.500 -   3.000    1.433  (  1.115)    0.800  (   small objs)  txID002
+       First-byte latency:  0.100 -   1.200    0.457  (  0.379)    0.250  (all obj sizes)  txID004
+       Last-byte  latency:  0.200 -   3.000    1.029  (  0.953)    0.600  (all obj sizes)  txID002
+       First-byte latency:  0.100 -   1.000    0.400  (  0.352)    0.200  (    tiny objs)  txID010
+       Last-byte  latency:  0.200 -   1.800    0.760  (  0.568)    0.699  (    tiny objs)  txID010
+       First-byte latency:  0.100 -   1.000    0.450  (  0.350)    0.350  (   small objs)  txID002
+       Last-byte  latency:  0.200 -   3.000    1.125  (  1.103)    0.650  (   small objs)  txID002
        First-byte latency:  0.300 -   0.800    0.550  (  0.250)    0.550  (  medium objs)  txID006
        Last-byte  latency:  0.400 -   2.800    1.600  (  1.200)    1.600  (  medium objs)  txID006
        First-byte latency:  0.100 -   0.200    0.150  (  0.050)    0.150  (   large objs)  txID005
@@ -957,7 +1036,17 @@ DELETE
        First-byte latency:  0.100 -   0.100    0.100  (  0.000)    0.100  (   large objs)  txID007
        Last-byte  latency:  0.400 -   0.400    0.400  (  0.000)    0.400  (   large objs)  txID007
 
-Distribution of requests per worker-ID:  4.000 -   4.000 (avg:   4.000; stddev:   0.000)
+LIST
+       Count:     2 (    0 error;     0 retries:  0.00%)  Average requests per second:   0.6
+                            min       max      avg      std_dev  50%-ile                   Worst latency TX ID
+       First-byte latency:  0.100 -   0.200    0.150  (  0.050)    0.150  (all obj sizes)  txID015
+       Last-byte  latency:  0.200 -   0.300    0.250  (  0.050)    0.250  (all obj sizes)  txID015
+       First-byte latency:  0.200 -   0.200    0.200  (  0.000)    0.200  (    tiny objs)  txID015
+       Last-byte  latency:  0.300 -   0.300    0.300  (  0.000)    0.300  (    tiny objs)  txID015
+       First-byte latency:  0.100 -   0.100    0.100  (  0.000)    0.100  (   small objs)  txID014
+       Last-byte  latency:  0.200 -   0.200    0.200  (  0.000)    0.200  (   small objs)  txID014
+
+Distribution of requests per worker-ID:  4.000 -   5.000 (avg:   4.667; stddev:   0.471)
 """.split('\n'), self.reporter.generate_default_report().split('\n'))
 
     def test_generate_default_report_csv(self):
@@ -979,43 +1068,43 @@ Distribution of requests per worker-ID:  4.000 -   4.000 (avg:   4.000; stddev: 
             'stop_time': '1970-01-01 00:01:46 UTC',
             'duration': '6.800000000000011',
             'delete_after': 'None',
-            'total_count': '12',
-            'total_avg_req_per_s': '0.229885',
+            'total_count': '14',
+            'total_avg_req_per_s': '0.268199',
             'total_first_all_min': '0.1',
             'total_first_all_max': '1.2',
-            'total_first_all_avg': '0.508333',
-            'total_first_all_std_dev': '0.386131',
-            'total_first_all_50_pctile': '0.4',
+            'total_first_all_avg': '0.457143',
+            'total_first_all_std_dev': '0.379312',
+            'total_first_all_50_pctile': '0.25',
             'total_first_all_worst_txid': 'txID004',
             'total_last_all_min': '0.2',
             'total_last_all_max': '3.0',
-            'total_last_all_avg': '1.15825',
-            'total_last_all_std_dev': '0.969969',
-            'total_last_all_50_pctile': '0.7495',
+            'total_last_all_avg': '1.0285',
+            'total_last_all_std_dev': '0.952786',
+            'total_last_all_50_pctile': '0.5995',
             'total_last_all_worst_txid': 'txID002',
             'total_first_tiny_min': '0.1',
             'total_first_tiny_max': '1.0',
-            'total_first_tiny_avg': '0.45',
-            'total_first_tiny_std_dev': '0.377492',
-            'total_first_tiny_50_pctile': '0.35',
+            'total_first_tiny_avg': '0.4',
+            'total_first_tiny_std_dev': '0.352136',
+            'total_first_tiny_50_pctile': '0.2',
             'total_first_tiny_worst_txid': 'txID010',
             'total_last_tiny_min': '0.2',
             'total_last_tiny_max': '1.8',
-            'total_last_tiny_avg': '0.87475',
-            'total_last_tiny_std_dev': '0.580485',
-            'total_last_tiny_50_pctile': '0.7495',
+            'total_last_tiny_avg': '0.7598',
+            'total_last_tiny_std_dev': '0.567824',
+            'total_last_tiny_50_pctile': '0.699',
             'total_last_tiny_worst_txid': 'txID010',
-            'total_first_small_min': '0.2',
+            'total_first_small_min': '0.1',
             'total_first_small_max': '1.0',
-            'total_first_small_avg': '0.566667',
-            'total_first_small_std_dev': '0.329983',
-            'total_first_small_50_pctile': '0.5',
+            'total_first_small_avg': '0.45',
+            'total_first_small_std_dev': '0.35',
+            'total_first_small_50_pctile': '0.35',
             'total_first_small_worst_txid': 'txID002',
-            'total_last_small_min': '0.5',
+            'total_last_small_min': '0.2',
             'total_last_small_max': '3.0',
-            'total_last_small_avg': '1.433333',
-            'total_last_small_std_dev': '1.11455',
-            'total_last_small_50_pctile': '0.8',
+            'total_last_small_avg': '1.125',
+            'total_last_small_std_dev': '1.103121',
+            'total_last_small_50_pctile': '0.65',
             'total_last_small_worst_txid': 'txID002',
             'total_first_medium_min': '0.3',
             'total_first_medium_max': '0.8',
@@ -1241,6 +1330,44 @@ Distribution of requests per worker-ID:  4.000 -   4.000 (avg:   4.000; stddev: 
             'delete_last_large_std_dev': '0.0',
             'delete_last_large_50_pctile': '0.4',
             'delete_last_large_worst_txid': 'txID007',
+            'list_count': '2',
+            'list_avg_req_per_s': '0.645161',
+            'list_first_all_min': '0.1',
+            'list_first_all_max': '0.2',
+            'list_first_all_avg': '0.15',
+            'list_first_all_std_dev': '0.05',
+            'list_first_all_50_pctile': '0.15',
+            'list_first_all_worst_txid': 'txID015',
+            'list_last_all_min': '0.2',
+            'list_last_all_max': '0.3',
+            'list_last_all_avg': '0.25',
+            'list_last_all_std_dev': '0.05',
+            'list_last_all_50_pctile': '0.25',
+            'list_last_all_worst_txid': 'txID015',
+            'list_first_tiny_min': '0.2',
+            'list_first_tiny_max': '0.2',
+            'list_first_tiny_avg': '0.2',
+            'list_first_tiny_std_dev': '0.0',
+            'list_first_tiny_50_pctile': '0.2',
+            'list_first_tiny_worst_txid': 'txID015',
+            'list_last_tiny_min': '0.3',
+            'list_last_tiny_max': '0.3',
+            'list_last_tiny_avg': '0.3',
+            'list_last_tiny_std_dev': '0.0',
+            'list_last_tiny_50_pctile': '0.3',
+            'list_last_tiny_worst_txid': 'txID015',
+            'list_first_small_min': '0.1',
+            'list_first_small_max': '0.1',
+            'list_first_small_avg': '0.1',
+            'list_first_small_std_dev': '0.0',
+            'list_first_small_50_pctile': '0.1',
+            'list_first_small_worst_txid': 'txID014',
+            'list_last_small_min': '0.2',
+            'list_last_small_max': '0.2',
+            'list_last_small_avg': '0.2',
+            'list_last_small_std_dev': '0.0',
+            'list_last_small_50_pctile': '0.2',
+            'list_last_small_worst_txid': 'txID014',
         }], csv_data)
 
 
@@ -1263,8 +1390,8 @@ class TestDeleteAfterNonNone(TestReporterBase):
                 tiny=300, small=400, medium=500, large=200, huge=70,
             ),
             operation_count=5000,
-            #             C  R  U  D
-            crud_profile=[5, 3, 1, 1],
+            #             C  R  U  D  L
+            crud_profile=[5, 2, 1, 1, 1],
             user_count=2,
             delete_after=713,
         )
@@ -1279,25 +1406,25 @@ Reporter Test Scenario - ablkei  (generated with ssbench version 0.2.14)
 Worker count:   3   Concurrency:   2  Ran 1970-01-01 00:01:39 UTC to 1970-01-01 00:01:46 UTC (7s)
 Object expiration (X-Delete-After): 713 (sec)
 
-% Ops    C   R   U   D       Size Range       Size Name
- 20%   % 50  30  10  10       99  B - 100  B  tiny
- 27%   % 71   9  12   8        2 kB           small
- 34%   % 50  30  10  10        3 kB -   3 kB  medium
-  0%   % 50  30  10  10       10 MB           unused
- 14%   % 16  61   7  16      399 kB - 400 kB  large
-  5%   % 50  30  10  10       50 MB -  71 MB  huge
+% Ops    C   R   U   D   L       Size Range       Size Name
+ 20%   % 50  20  10  10  10       99  B - 100  B  tiny
+ 27%   % 71   9  12   8   0        2 kB           small
+ 34%   % 50  20  10  10  10        3 kB -   3 kB  medium
+  0%   % 50  20  10  10  10       10 MB           unused
+ 14%   % 16  61   7  16   0      399 kB - 400 kB  large
+  5%   % 50  20  10  10  10       50 MB -  71 MB  huge
 ---------------------------------------------------------------------
-         51  29  10  10      CRUD weighted average
+         51  23  10  10   6      CRUD weighted average
 
 TOTAL
-       Count:    12 (    1 error;     7 retries: 58.33%)  Average requests per second:   0.2
+       Count:    14 (    1 error;     7 retries: 50.00%)  Average requests per second:   0.3
                             min       max      avg      std_dev  50%-ile                   Worst latency TX ID
-       First-byte latency:  0.100 -   1.200    0.508  (  0.386)    0.400  (all obj sizes)  txID004
-       Last-byte  latency:  0.200 -   3.000    1.158  (  0.970)    0.750  (all obj sizes)  txID002
-       First-byte latency:  0.100 -   1.000    0.450  (  0.377)    0.350  (    tiny objs)  txID010
-       Last-byte  latency:  0.200 -   1.800    0.875  (  0.580)    0.750  (    tiny objs)  txID010
-       First-byte latency:  0.200 -   1.000    0.567  (  0.330)    0.500  (   small objs)  txID002
-       Last-byte  latency:  0.500 -   3.000    1.433  (  1.115)    0.800  (   small objs)  txID002
+       First-byte latency:  0.100 -   1.200    0.457  (  0.379)    0.250  (all obj sizes)  txID004
+       Last-byte  latency:  0.200 -   3.000    1.029  (  0.953)    0.600  (all obj sizes)  txID002
+       First-byte latency:  0.100 -   1.000    0.400  (  0.352)    0.200  (    tiny objs)  txID010
+       Last-byte  latency:  0.200 -   1.800    0.760  (  0.568)    0.699  (    tiny objs)  txID010
+       First-byte latency:  0.100 -   1.000    0.450  (  0.350)    0.350  (   small objs)  txID002
+       Last-byte  latency:  0.200 -   3.000    1.125  (  1.103)    0.650  (   small objs)  txID002
        First-byte latency:  0.300 -   0.800    0.550  (  0.250)    0.550  (  medium objs)  txID006
        Last-byte  latency:  0.400 -   2.800    1.600  (  1.200)    1.600  (  medium objs)  txID006
        First-byte latency:  0.100 -   0.200    0.150  (  0.050)    0.150  (   large objs)  txID005
@@ -1351,7 +1478,17 @@ DELETE
        First-byte latency:  0.100 -   0.100    0.100  (  0.000)    0.100  (   large objs)  txID007
        Last-byte  latency:  0.400 -   0.400    0.400  (  0.000)    0.400  (   large objs)  txID007
 
-Distribution of requests per worker-ID:  4.000 -   4.000 (avg:   4.000; stddev:   0.000)
+LIST
+       Count:     2 (    0 error;     0 retries:  0.00%)  Average requests per second:   0.6
+                            min       max      avg      std_dev  50%-ile                   Worst latency TX ID
+       First-byte latency:  0.100 -   0.200    0.150  (  0.050)    0.150  (all obj sizes)  txID015
+       Last-byte  latency:  0.200 -   0.300    0.250  (  0.050)    0.250  (all obj sizes)  txID015
+       First-byte latency:  0.200 -   0.200    0.200  (  0.000)    0.200  (    tiny objs)  txID015
+       Last-byte  latency:  0.300 -   0.300    0.300  (  0.000)    0.300  (    tiny objs)  txID015
+       First-byte latency:  0.100 -   0.100    0.100  (  0.000)    0.100  (   small objs)  txID014
+       Last-byte  latency:  0.200 -   0.200    0.200  (  0.000)    0.200  (   small objs)  txID014
+
+Distribution of requests per worker-ID:  4.000 -   5.000 (avg:   4.667; stddev:   0.471)
 """.split('\n'), self.reporter.generate_default_report().split('\n'))
 
     def test_generate_default_report_csv(self):
@@ -1373,43 +1510,43 @@ Distribution of requests per worker-ID:  4.000 -   4.000 (avg:   4.000; stddev: 
             'stop_time': '1970-01-01 00:01:46 UTC',
             'duration': '6.800000000000011',
             'delete_after': '713',
-            'total_count': '12',
-            'total_avg_req_per_s': '0.229885',
+            'total_count': '14',
+            'total_avg_req_per_s': '0.268199',
             'total_first_all_min': '0.1',
             'total_first_all_max': '1.2',
-            'total_first_all_avg': '0.508333',
-            'total_first_all_std_dev': '0.386131',
-            'total_first_all_50_pctile': '0.4',
+            'total_first_all_avg': '0.457143',
+            'total_first_all_std_dev': '0.379312',
+            'total_first_all_50_pctile': '0.25',
             'total_first_all_worst_txid': 'txID004',
             'total_last_all_min': '0.2',
             'total_last_all_max': '3.0',
-            'total_last_all_avg': '1.15825',
-            'total_last_all_std_dev': '0.969969',
-            'total_last_all_50_pctile': '0.7495',
+            'total_last_all_avg': '1.0285',
+            'total_last_all_std_dev': '0.952786',
+            'total_last_all_50_pctile': '0.5995',
             'total_last_all_worst_txid': 'txID002',
             'total_first_tiny_min': '0.1',
             'total_first_tiny_max': '1.0',
-            'total_first_tiny_avg': '0.45',
-            'total_first_tiny_std_dev': '0.377492',
-            'total_first_tiny_50_pctile': '0.35',
+            'total_first_tiny_avg': '0.4',
+            'total_first_tiny_std_dev': '0.352136',
+            'total_first_tiny_50_pctile': '0.2',
             'total_first_tiny_worst_txid': 'txID010',
             'total_last_tiny_min': '0.2',
             'total_last_tiny_max': '1.8',
-            'total_last_tiny_avg': '0.87475',
-            'total_last_tiny_std_dev': '0.580485',
-            'total_last_tiny_50_pctile': '0.7495',
+            'total_last_tiny_avg': '0.7598',
+            'total_last_tiny_std_dev': '0.567824',
+            'total_last_tiny_50_pctile': '0.699',
             'total_last_tiny_worst_txid': 'txID010',
-            'total_first_small_min': '0.2',
+            'total_first_small_min': '0.1',
             'total_first_small_max': '1.0',
-            'total_first_small_avg': '0.566667',
-            'total_first_small_std_dev': '0.329983',
-            'total_first_small_50_pctile': '0.5',
+            'total_first_small_avg': '0.45',
+            'total_first_small_std_dev': '0.35',
+            'total_first_small_50_pctile': '0.35',
             'total_first_small_worst_txid': 'txID002',
-            'total_last_small_min': '0.5',
+            'total_last_small_min': '0.2',
             'total_last_small_max': '3.0',
-            'total_last_small_avg': '1.433333',
-            'total_last_small_std_dev': '1.11455',
-            'total_last_small_50_pctile': '0.8',
+            'total_last_small_avg': '1.125',
+            'total_last_small_std_dev': '1.103121',
+            'total_last_small_50_pctile': '0.65',
             'total_last_small_worst_txid': 'txID002',
             'total_first_medium_min': '0.3',
             'total_first_medium_max': '0.8',
@@ -1635,4 +1772,42 @@ Distribution of requests per worker-ID:  4.000 -   4.000 (avg:   4.000; stddev: 
             'delete_last_large_std_dev': '0.0',
             'delete_last_large_50_pctile': '0.4',
             'delete_last_large_worst_txid': 'txID007',
+            'list_count': '2',
+            'list_avg_req_per_s': '0.645161',
+            'list_first_all_min': '0.1',
+            'list_first_all_max': '0.2',
+            'list_first_all_avg': '0.15',
+            'list_first_all_std_dev': '0.05',
+            'list_first_all_50_pctile': '0.15',
+            'list_first_all_worst_txid': 'txID015',
+            'list_last_all_min': '0.2',
+            'list_last_all_max': '0.3',
+            'list_last_all_avg': '0.25',
+            'list_last_all_std_dev': '0.05',
+            'list_last_all_50_pctile': '0.25',
+            'list_last_all_worst_txid': 'txID015',
+            'list_first_tiny_min': '0.2',
+            'list_first_tiny_max': '0.2',
+            'list_first_tiny_avg': '0.2',
+            'list_first_tiny_std_dev': '0.0',
+            'list_first_tiny_50_pctile': '0.2',
+            'list_first_tiny_worst_txid': 'txID015',
+            'list_last_tiny_min': '0.3',
+            'list_last_tiny_max': '0.3',
+            'list_last_tiny_avg': '0.3',
+            'list_last_tiny_std_dev': '0.0',
+            'list_last_tiny_50_pctile': '0.3',
+            'list_last_tiny_worst_txid': 'txID015',
+            'list_first_small_min': '0.1',
+            'list_first_small_max': '0.1',
+            'list_first_small_avg': '0.1',
+            'list_first_small_std_dev': '0.0',
+            'list_first_small_50_pctile': '0.1',
+            'list_first_small_worst_txid': 'txID014',
+            'list_last_small_min': '0.2',
+            'list_last_small_max': '0.2',
+            'list_last_small_avg': '0.2',
+            'list_last_small_std_dev': '0.0',
+            'list_last_small_50_pctile': '0.2',
+            'list_last_small_worst_txid': 'txID014',
         }], csv_data)

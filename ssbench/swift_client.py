@@ -504,6 +504,7 @@ def get_container(url, token, container, marker=None, limit=None,
         qs += '&delimiter=%s' % quote(delimiter)
     headers = {'X-Auth-Token': token}
     method = 'GET'
+    start_time = time()
     conn.request(method, '%s?%s' % (path, qs), '', headers)
     resp = conn.getresponse()
     body = resp.read()
@@ -517,8 +518,8 @@ def get_container(url, token, container, marker=None, limit=None,
                               http_reason=resp.reason,
                               http_response_content=body)
     resp_headers = {}
-    for header, value in resp.getheaders():
-        resp_headers[header.lower()] = value
+    resp_headers = _decorated_response_headers(
+        resp, last_byte_latency=time() - start_time)
     if resp.status == 204:
         return resp_headers, []
     return resp_headers, json_loads(body)
