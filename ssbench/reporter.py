@@ -24,7 +24,7 @@ from mako.template import Template
 
 import ssbench
 from ssbench.ordered_dict import OrderedDict
-
+from ssbench.util import _round
 
 REPORT_TIME_FORMAT = '%F %T UTC'
 
@@ -216,10 +216,10 @@ Distribution of requests per worker-ID: ${jobs_per_worker_stats['min']} - ${jobs
     def _format_bytes(self, byte_count):
         units = [' B', 'kB', 'MB', 'GB']
         i = 0
-        while round(byte_count / 1000.0, 3) >= 1.0:
+        while _round(byte_count / 1000.0, 3) >= 1.0:
             byte_count = byte_count / 1000.0
             i += 1
-        return '%3.0f %s' % (round(byte_count), units[i])
+        return '%3.0f %s' % (_round(byte_count), units[i])
 
     def calculate_scenario_stats(self, nth_pctile=95, format_numbers=True):
         """Compute various statistics from worker job result dicts.
@@ -496,12 +496,12 @@ Distribution of requests per worker-ID: ${jobs_per_worker_stats['min']} - ${jobs
             stat_dict['avg_req_per_sec'] = 0.0
         else:
             delta_t = stat_dict['stop'] - sd_start
-            stat_dict['avg_req_per_sec'] = round(
+            stat_dict['avg_req_per_sec'] = _round(
                 stat_dict['req_count'] / delta_t,
                 6)
 
     def _compute_retry_rate(self, stat_dict):
-        stat_dict['retry_rate'] = round((float(stat_dict['retries']) /
+        stat_dict['retry_rate'] = _round((float(stat_dict['retries']) /
                                          stat_dict['req_count']) * 100, 6)
 
     def _add_result_to(self, stat_dict, result):
@@ -552,20 +552,23 @@ Distribution of requests per worker-ID: ${jobs_per_worker_stats['min']} - ${jobs
             mean = sequence[0]
         if format_numbers:
             return dict(
-                min='%6.3f' % minval,
-                max='%7.3f' % maxval,
-                avg='%7.3f' % mean,
-                pctile='%7.3f' % self.pctile(sequence, nth_pctile),
-                std_dev='%7.3f' % statlib.stats.lsamplestdev(sequence),
-                median='%7.3f' % statlib.stats.lmedianscore(sequence))
+                min='%6.3f' % _round(minval, 3),
+                max='%7.3f' % _round(maxval, 3),
+                avg='%7.3f' % _round(mean, 3),
+                pctile='%7.3f' % _round(
+                    self.pctile(sequence, nth_pctile), 3),
+                std_dev='%7.3f' % _round(
+                    statlib.stats.lsamplestdev(sequence), 3),
+                median='%7.3f' % _round(
+                    statlib.stats.lmedianscore(sequence), 3))
         else:
             return dict(
-                min=round(minval, 6),
-                max=round(maxval, 6),
-                avg=round(mean, 6),
-                pctile=round(self.pctile(sequence, nth_pctile), 6),
-                std_dev=round(statlib.stats.lsamplestdev(sequence), 6),
-                median=round(statlib.stats.lmedianscore(sequence), 6))
+                min=_round(minval, 6),
+                max=_round(maxval, 6),
+                avg=_round(mean, 6),
+                pctile=_round(self.pctile(sequence, nth_pctile), 6),
+                std_dev=_round(statlib.stats.lsamplestdev(sequence), 6),
+                median=_round(statlib.stats.lmedianscore(sequence), 6))
 
     def pctile(self, sequence, nth_pctile):
         seq_len = len(sequence)
@@ -587,5 +590,5 @@ Distribution of requests per worker-ID: ${jobs_per_worker_stats['min']} - ${jobs
                 worst_key = 'worst_%s' % latency_type
                 if worst_key not in stats_dict \
                         or result[latency_type] > stats_dict[worst_key][0]:
-                    stats_dict[worst_key] = (round(result[latency_type], 6),
+                    stats_dict[worst_key] = (_round(result[latency_type], 6),
                                              result['trans_id'])

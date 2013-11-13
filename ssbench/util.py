@@ -2,6 +2,7 @@
 
 import os
 import resource
+from decimal import Decimal, ROUND_HALF_UP
 
 
 def add_dicts(*args, **kwargs):
@@ -31,3 +32,12 @@ def raise_file_descriptor_limit():
         except ValueError:
             nofile_target /= 1024
         break
+
+
+def _round(num, rounding=0):
+    """
+    This serves a method like a round() to be able to prevent the problem
+    of floating decimal calculation.
+    """
+    return float(Decimal(str(num)).quantize(
+        Decimal(str(10)) ** (rounding * -1), rounding=ROUND_HALF_UP))

@@ -24,6 +24,7 @@ from ssbench.reporter import Reporter
 from ssbench.ordered_dict import OrderedDict
 
 from ssbench.tests.test_scenario import ScenarioFixture
+from ssbench.util import _round
 
 
 class TestReporterBase(ScenarioFixture, TestCase):
@@ -196,10 +197,12 @@ class TestReporter(TestReporterBase):
         self.assertDictEqual(dict(
             min='%6.3f' % 4,
             max='%7.3f' % 4,
-            avg='%7.3f' % stats.lmean(req_counts),
+            avg='%7.3f' % _round(stats.lmean(req_counts), 3),
             pctile='%7.3f' % 4,
-            std_dev='%7.3f' % stats.lsamplestdev(req_counts),
-            median='%7.3f' % stats.lmedianscore(req_counts),
+            std_dev='%7.3f' % _round(
+                stats.lsamplestdev(req_counts), 3),
+            median='%7.3f' % _round(
+                stats.lmedianscore(req_counts), 3),
         ), self.reporter.stats['jobs_per_worker_stats'])
 
     def test_calculate_scenario_stats_aggregate(self):
@@ -210,24 +213,27 @@ class TestReporter(TestReporterBase):
         self.assertDictEqual(dict(
             worker_count=3, start=100.0, stop=152.2, req_count=12,
             retries=7, errors=1,
-            retry_rate=round(7.0 / 12 * 100, 6),
-            avg_req_per_sec=round(12 / (152.2 - 100), 6),
+            retry_rate=_round(7.0 / 12 * 100, 6),
+            avg_req_per_sec=_round(12 / (152.2 - 100), 6),
             first_byte_latency=dict(
                 min='%6.3f' % 0.1,
                 max='%7.3f' % 1.2,
-                avg='%7.3f' % stats.lmean(first_byte_latency_all),
+                avg='%7.3f' % _round(stats.lmean(first_byte_latency_all), 3),
                 pctile='%7.3f' % 1.2,
-                std_dev='%7.3f' % stats.lsamplestdev(first_byte_latency_all),
-                median='%7.3f' % stats.lmedianscore(first_byte_latency_all),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(first_byte_latency_all), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(first_byte_latency_all), 3),
             ),
             last_byte_latency=dict(
                 min='%6.3f' % 0.2,
                 max='%7.3f' % 3.0,
-                avg='%7.3f' % stats.lmean(last_byte_latency_all),
+                avg='%7.3f' % _round(stats.lmean(last_byte_latency_all), 3),
                 pctile='%7.3f' % 3.0,
-                std_dev='%7.3f' % stats.lsamplestdev(last_byte_latency_all),
-                median='  0.749',  # XXX why??
-                # median='%7.3f' % stats.lmedianscore(last_byte_latency_all),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(last_byte_latency_all), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(last_byte_latency_all), 3),
             ),
             worst_first_byte_latency=(1.2, 'txID004'),
             worst_last_byte_latency=(3.0, 'txID002'),
@@ -244,24 +250,27 @@ class TestReporter(TestReporterBase):
         self.assertDictEqual(dict(
             worker_count=3, start=100.0, stop=152.2, req_count=12,
             retries=7, errors=1,
-            retry_rate=round(7.0 / 12 * 100, 6),
-            avg_req_per_sec=round(12 / (152.2 - 100), 6),
+            retry_rate=_round(7.0 / 12 * 100, 6),
+            avg_req_per_sec=_round(12 / (152.2 - 100), 6),
             first_byte_latency=dict(
                 min='%6.3f' % 0.1,
                 max='%7.3f' % 1.2,
-                avg='%7.3f' % stats.lmean(first_byte_latency_all),
-                pctile='%7.3f' % sorted(first_byte_latency_all)[2],
-                std_dev='%7.3f' % stats.lsamplestdev(first_byte_latency_all),
-                median='%7.3f' % stats.lmedianscore(first_byte_latency_all),
+                avg='%7.3f' % _round(stats.lmean(first_byte_latency_all), 3),
+                pctile='%7.3f' % _round(sorted(first_byte_latency_all)[2], 3),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(first_byte_latency_all), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(first_byte_latency_all), 3),
             ),
             last_byte_latency=dict(
                 min='%6.3f' % 0.2,
                 max='%7.3f' % 3.0,
-                avg='%7.3f' % stats.lmean(last_byte_latency_all),
-                pctile='%7.3f' % sorted(last_byte_latency_all)[2],
-                std_dev='%7.3f' % stats.lsamplestdev(last_byte_latency_all),
-                median='  0.749',  # XXX why??
-                # median='%7.3f' % stats.lmedianscore(last_byte_latency_all),
+                avg='%7.3f' % _round(stats.lmean(last_byte_latency_all), 3),
+                pctile='%7.3f' % _round(sorted(last_byte_latency_all)[2], 3),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(last_byte_latency_all), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(last_byte_latency_all), 3),
             ),
             worst_first_byte_latency=(1.2, 'txID004'),
             worst_last_byte_latency=(3.0, 'txID002'),
@@ -273,22 +282,26 @@ class TestReporter(TestReporterBase):
         self.assertDictEqual(dict(
             start=100.0, stop=106.4, req_count=4,
             retries=0, retry_rate=0.0, errors=0,
-            avg_req_per_sec=round(4 / (106.4 - 100), 6),
+            avg_req_per_sec=_round(4 / (106.4 - 100), 6),
             first_byte_latency=dict(
                 min='%6.3f' % min(w1_first_byte_latency),
                 max='%7.3f' % max(w1_first_byte_latency),
-                avg='%7.3f' % stats.lmean(w1_first_byte_latency),
+                avg='%7.3f' % _round(stats.lmean(w1_first_byte_latency), 3),
                 pctile='%7.3f' % 1.2,
-                std_dev='%7.3f' % stats.lsamplestdev(w1_first_byte_latency),
-                median='%7.3f' % stats.lmedianscore(w1_first_byte_latency),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(w1_first_byte_latency), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(w1_first_byte_latency), 3),
             ),
             last_byte_latency=dict(
                 min='%6.3f' % min(w1_last_byte_latency),
                 max='%7.3f' % max(w1_last_byte_latency),
-                avg='%7.3f' % stats.lmean(w1_last_byte_latency),
+                avg='%7.3f' % _round(stats.lmean(w1_last_byte_latency), 3),
                 pctile='%7.3f' % 3.0,
-                std_dev='%7.3f' % stats.lsamplestdev(w1_last_byte_latency),
-                median='%7.3f' % stats.lmedianscore(w1_last_byte_latency),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(w1_last_byte_latency), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(w1_last_byte_latency), 3),
             ),
             worst_first_byte_latency=(float(max(w1_first_byte_latency)),
                                       'txID004'),
@@ -302,23 +315,27 @@ class TestReporter(TestReporterBase):
         self.assertDictEqual(dict(
             start=100.1, stop=152.2, req_count=4,
             retries=7, errors=1,
-            retry_rate=round(7.0 / 4 * 100, 6),
-            avg_req_per_sec=round(4 / (152.2 - 100.1), 6),
+            retry_rate=_round(7.0 / 4 * 100, 6),
+            avg_req_per_sec=_round(4 / (152.2 - 100.1), 6),
             first_byte_latency=dict(
                 min='%6.3f' % min(w2_first_byte_latency),
                 max='%7.3f' % max(w2_first_byte_latency),
-                avg='%7.3f' % stats.lmean(w2_first_byte_latency),
+                avg='%7.3f' % _round(stats.lmean(w2_first_byte_latency), 3),
                 pctile='%7.3f' % 0.8,
-                std_dev='%7.3f' % stats.lsamplestdev(w2_first_byte_latency),
-                median='%7.3f' % stats.lmedianscore(w2_first_byte_latency),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(w2_first_byte_latency), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(w2_first_byte_latency), 3),
             ),
             last_byte_latency=dict(
                 min='%6.3f' % min(w2_last_byte_latency),
                 max='%7.3f' % max(w2_last_byte_latency),
-                avg='%7.3f' % stats.lmean(w2_last_byte_latency),
+                avg='%7.3f' % _round(stats.lmean(w2_last_byte_latency), 3),
                 pctile='%7.3f' % 2.8,
-                std_dev='%7.3f' % stats.lsamplestdev(w2_last_byte_latency),
-                median='%7.3f' % stats.lmedianscore(w2_last_byte_latency),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(w2_last_byte_latency), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(w2_last_byte_latency), 3),
             ),
             worst_first_byte_latency=(float(max(w2_first_byte_latency)),
                                       'txID006'),
@@ -332,22 +349,26 @@ class TestReporter(TestReporterBase):
         self.assertDictEqual(dict(
             start=100.1, stop=104.999, req_count=4,
             retries=0, retry_rate=0.0, errors=0,
-            avg_req_per_sec=round(4 / (104.999 - 100.1), 6),
+            avg_req_per_sec=_round(4 / (104.999 - 100.1), 6),
             first_byte_latency=dict(
                 min='%6.3f' % min(w3_first_byte_latency),
                 max='%7.3f' % max(w3_first_byte_latency),
-                avg='%7.3f' % stats.lmean(w3_first_byte_latency),
+                avg='%7.3f' % _round(stats.lmean(w3_first_byte_latency), 3),
                 pctile='%7.3f' % 1.0,
-                std_dev='%7.3f' % stats.lsamplestdev(w3_first_byte_latency),
-                median='%7.3f' % stats.lmedianscore(w3_first_byte_latency),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(w3_first_byte_latency), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(w3_first_byte_latency), 3),
             ),
             last_byte_latency=dict(
                 min='%6.3f' % min(w3_last_byte_latency),
                 max='%7.3f' % max(w3_last_byte_latency),
-                avg='%7.3f' % stats.lmean(w3_last_byte_latency),
+                avg='%7.3f' % _round(stats.lmean(w3_last_byte_latency), 3),
                 pctile='%7.3f' % 1.8,
-                std_dev='%7.3f' % stats.lsamplestdev(w3_last_byte_latency),
-                median='%7.3f' % stats.lmedianscore(w3_last_byte_latency),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(w3_last_byte_latency), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(w3_last_byte_latency), 3),
             ),
             worst_first_byte_latency=(
                 float(max(w3_first_byte_latency)), 'txID010'),
@@ -362,22 +383,26 @@ class TestReporter(TestReporterBase):
         self.assertDictEqual(dict(
             start=100.0, stop=106.0, req_count=3,
             retries=1, retry_rate=33.333333, errors=0,
-            avg_req_per_sec=round(3 / (106 - 100.0), 6),
+            avg_req_per_sec=_round(3 / (106 - 100.0), 6),
             first_byte_latency=dict(
                 min='%6.3f' % min(c_first_byte_latency),
                 max='%7.3f' % max(c_first_byte_latency),
                 pctile='%7.3f' % max(c_first_byte_latency),
-                avg='%7.3f' % stats.lmean(c_first_byte_latency),
-                std_dev='%7.3f' % stats.lsamplestdev(c_first_byte_latency),
-                median='%7.3f' % stats.lmedianscore(c_first_byte_latency),
+                avg='%7.3f' % _round(stats.lmean(c_first_byte_latency), 3),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(c_first_byte_latency), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(c_first_byte_latency), 3),
             ),
             last_byte_latency=dict(
                 min='%6.3f' % min(c_last_byte_latency),
                 max='%7.3f' % max(c_last_byte_latency),
                 pctile='%7.3f' % max(c_last_byte_latency),
-                avg='%7.3f' % stats.lmean(c_last_byte_latency),
-                std_dev='%7.3f' % stats.lsamplestdev(c_last_byte_latency),
-                median='%7.3f' % stats.lmedianscore(c_last_byte_latency),
+                avg='%7.3f' % _round(stats.lmean(c_last_byte_latency), 3),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(c_last_byte_latency), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(c_last_byte_latency), 3),
             ),
             worst_first_byte_latency=(max(c_first_byte_latency), 'txID004'),
             worst_last_byte_latency=(max(c_last_byte_latency), 'txID002'),
@@ -454,22 +479,26 @@ class TestReporter(TestReporterBase):
         self.assertDictEqual(dict(
             start=100.1, stop=104.3, req_count=4,
             retries=0, retry_rate=0.0, errors=0,
-            avg_req_per_sec=round(4 / (104.3 - 100.1), 6),
+            avg_req_per_sec=_round(4 / (104.3 - 100.1), 6),
             first_byte_latency=dict(
                 min='%6.3f' % min(r_first_byte_latency),
                 max='%7.3f' % max(r_first_byte_latency),
                 pctile='%7.3f' % max(r_first_byte_latency),
-                avg='%7.3f' % stats.lmean(r_first_byte_latency),
-                std_dev='%7.3f' % stats.lsamplestdev(r_first_byte_latency),
-                median='%7.3f' % stats.lmedianscore(r_first_byte_latency),
+                avg='%7.3f' % _round(stats.lmean(r_first_byte_latency), 3),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(r_first_byte_latency), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(r_first_byte_latency), 3),
             ),
             last_byte_latency=dict(
                 min='%6.3f' % min(r_last_byte_latency),
                 max='%7.3f' % max(r_last_byte_latency),
                 pctile='%7.3f' % max(r_last_byte_latency),
-                avg='%7.3f' % stats.lmean(r_last_byte_latency),
-                std_dev='%7.3f' % stats.lsamplestdev(r_last_byte_latency),
-                median='%7.3f' % stats.lmedianscore(r_last_byte_latency),
+                avg='%7.3f' % _round(stats.lmean(r_last_byte_latency), 3),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(r_last_byte_latency), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(r_last_byte_latency), 3),
             ),
             worst_first_byte_latency=(max(r_first_byte_latency), 'txID010'),
             worst_last_byte_latency=(max(r_last_byte_latency), 'txID010'),
@@ -545,24 +574,28 @@ class TestReporter(TestReporterBase):
         self.assertDictEqual(dict(
             start=100.1, stop=152.2, req_count=3,
             retries=6, errors=1,
-            retry_rate=round(6.0 / 3 * 100, 6),
-            avg_req_per_sec=round(3 / (152.2 - 100.1), 6),
+            retry_rate=_round(6.0 / 3 * 100, 6),
+            avg_req_per_sec=_round(3 / (152.2 - 100.1), 6),
             first_byte_latency=dict(
                 min='%6.3f' % min(u_first_byte_latency),
                 max='%7.3f' % max(u_first_byte_latency),
-                avg='%7.3f' % stats.lmean(u_first_byte_latency),
+                avg='%7.3f' % _round(stats.lmean(u_first_byte_latency), 3),
                 pctile='%7.3f' % 0.8,
-                std_dev='%7.3f' % stats.lsamplestdev(u_first_byte_latency),
-                median='%7.3f' % stats.lmedianscore(u_first_byte_latency),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(u_first_byte_latency), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(u_first_byte_latency), 3),
             ),
             worst_first_byte_latency=(max(u_first_byte_latency), 'txID006'),
             last_byte_latency=dict(
                 min='%6.3f' % min(u_last_byte_latency),
                 max='%7.3f' % max(u_last_byte_latency),
-                avg='%7.3f' % stats.lmean(u_last_byte_latency),
+                avg='%7.3f' % _round(stats.lmean(u_last_byte_latency), 3),
                 pctile='%7.3f' % 2.8,
-                std_dev='%7.3f' % stats.lsamplestdev(u_last_byte_latency),
-                median='%7.3f' % stats.lmedianscore(u_last_byte_latency),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(u_last_byte_latency), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(u_last_byte_latency), 3),
             ),
             worst_last_byte_latency=(max(u_last_byte_latency), 'txID006'),
             size_stats=OrderedDict([
@@ -637,22 +670,27 @@ class TestReporter(TestReporterBase):
         self.assertDictEqual(dict(
             start=102.9, stop=103.9, req_count=2,
             retries=0, retry_rate=0.0, errors=0,
-            avg_req_per_sec=round(2 / (103.9 - 102.9), 6),
+            avg_req_per_sec=_round(2 / (103.9 - 102.9), 6),
             first_byte_latency=dict(
                 min='%6.3f' % min(d_first_byte_latency),
                 max='%7.3f' % max(d_first_byte_latency),
                 pctile='%7.3f' % max(d_first_byte_latency),
-                avg='%7.3f' % stats.lmean(d_first_byte_latency),
-                std_dev='%7.3f' % stats.lsamplestdev(d_first_byte_latency),
-                median='%7.3f' % stats.lmedianscore(d_first_byte_latency),
+                avg='%7.3f' % _round(
+                    stats.lmean(d_first_byte_latency), 3),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(d_first_byte_latency), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(d_first_byte_latency), 3),
             ),
             last_byte_latency=dict(
                 min='%6.3f' % min(d_last_byte_latency),
                 max='%7.3f' % max(d_last_byte_latency),
                 pctile='%7.3f' % max(d_last_byte_latency),
-                avg='%7.3f' % stats.lmean(d_last_byte_latency),
-                std_dev='%7.3f' % stats.lsamplestdev(d_last_byte_latency),
-                median='%7.3f' % stats.lmedianscore(d_last_byte_latency),
+                avg='%7.3f' % _round(stats.lmean(d_last_byte_latency), 3),
+                std_dev='%7.3f' % _round(
+                    stats.lsamplestdev(d_last_byte_latency), 3),
+                median='%7.3f' % _round(
+                    stats.lmedianscore(d_last_byte_latency), 3),
             ),
             worst_first_byte_latency=(max(d_first_byte_latency), 'txID011'),
             worst_last_byte_latency=(max(d_last_byte_latency), 'txID011'),
@@ -713,7 +751,7 @@ class TestReporter(TestReporterBase):
                       'last_byte_latency': {'avg': '%7.3f' % 0.87475,
                                             'max': '%7.3f' % 1.8,
                                             'pctile': '%7.3f' % 1.8,
-                                            'median': '%7.3f' % 0.7494,
+                                            'median': '%7.3f' % 0.750,
                                             'min': '%6.3f' % 0.2,
                                             'std_dev': '%7.3f' % 0.580485},
                       'worst_first_byte_latency': (1.0, 'txID010'),
@@ -861,9 +899,9 @@ TOTAL
        Count:    12 (    1 error;     7 retries: 58.33%)  Average requests per second:   0.2
                             min       max      avg      std_dev  50%-ile                   Worst latency TX ID
        First-byte latency:  0.100 -   1.200    0.508  (  0.386)    0.400  (all obj sizes)  txID004
-       Last-byte  latency:  0.200 -   3.000    1.158  (  0.970)    0.749  (all obj sizes)  txID002
+       Last-byte  latency:  0.200 -   3.000    1.158  (  0.970)    0.750  (all obj sizes)  txID002
        First-byte latency:  0.100 -   1.000    0.450  (  0.377)    0.350  (    tiny objs)  txID010
-       Last-byte  latency:  0.200 -   1.800    0.875  (  0.580)    0.749  (    tiny objs)  txID010
+       Last-byte  latency:  0.200 -   1.800    0.875  (  0.580)    0.750  (    tiny objs)  txID010
        First-byte latency:  0.200 -   1.000    0.567  (  0.330)    0.500  (   small objs)  txID002
        Last-byte  latency:  0.500 -   3.000    1.433  (  1.115)    0.800  (   small objs)  txID002
        First-byte latency:  0.300 -   0.800    0.550  (  0.250)    0.550  (  medium objs)  txID006
@@ -1255,9 +1293,9 @@ TOTAL
        Count:    12 (    1 error;     7 retries: 58.33%)  Average requests per second:   0.2
                             min       max      avg      std_dev  50%-ile                   Worst latency TX ID
        First-byte latency:  0.100 -   1.200    0.508  (  0.386)    0.400  (all obj sizes)  txID004
-       Last-byte  latency:  0.200 -   3.000    1.158  (  0.970)    0.749  (all obj sizes)  txID002
+       Last-byte  latency:  0.200 -   3.000    1.158  (  0.970)    0.750  (all obj sizes)  txID002
        First-byte latency:  0.100 -   1.000    0.450  (  0.377)    0.350  (    tiny objs)  txID010
-       Last-byte  latency:  0.200 -   1.800    0.875  (  0.580)    0.749  (    tiny objs)  txID010
+       Last-byte  latency:  0.200 -   1.800    0.875  (  0.580)    0.750  (    tiny objs)  txID010
        First-byte latency:  0.200 -   1.000    0.567  (  0.330)    0.500  (   small objs)  txID002
        Last-byte  latency:  0.500 -   3.000    1.433  (  1.115)    0.800  (   small objs)  txID002
        First-byte latency:  0.300 -   0.800    0.550  (  0.250)    0.550  (  medium objs)  txID006
