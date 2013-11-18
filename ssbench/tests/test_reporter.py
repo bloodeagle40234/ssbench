@@ -18,6 +18,7 @@ from mock import MagicMock
 from statlib import stats
 from unittest import TestCase
 from cStringIO import StringIO
+from decimal import Decimal
 
 import ssbench
 from ssbench.reporter import Reporter
@@ -94,8 +95,10 @@ class TestReporterBase(ScenarioFixture, TestCase):
             'size_str': size_str,
             'size': 989,
             'retries': retries,
-            'first_byte_latency': first_byte - start,
-            'last_byte_latency': last_byte - start,
+            'first_byte_latency':
+            float(Decimal(str(first_byte)) - Decimal(str(start))),
+            'last_byte_latency':
+            float(Decimal(str(last_byte)) - Decimal(str(start))),
             'trans_id': 'txID%03d' % self.result_index,
             'completed_at': last_byte,
         }
@@ -226,8 +229,7 @@ class TestReporter(TestReporterBase):
                 avg='%7.3f' % stats.lmean(last_byte_latency_all),
                 pctile='%7.3f' % 3.0,
                 std_dev='%7.3f' % stats.lsamplestdev(last_byte_latency_all),
-                median='  0.749',  # XXX why??
-                # median='%7.3f' % stats.lmedianscore(last_byte_latency_all),
+                median='%7.3f' % stats.lmedianscore(last_byte_latency_all),
             ),
             worst_first_byte_latency=(1.2, 'txID004'),
             worst_last_byte_latency=(3.0, 'txID002'),
@@ -260,8 +262,7 @@ class TestReporter(TestReporterBase):
                 avg='%7.3f' % stats.lmean(last_byte_latency_all),
                 pctile='%7.3f' % sorted(last_byte_latency_all)[2],
                 std_dev='%7.3f' % stats.lsamplestdev(last_byte_latency_all),
-                median='  0.749',  # XXX why??
-                # median='%7.3f' % stats.lmedianscore(last_byte_latency_all),
+                median='%7.3f' % stats.lmedianscore(last_byte_latency_all),
             ),
             worst_first_byte_latency=(1.2, 'txID004'),
             worst_last_byte_latency=(3.0, 'txID002'),
@@ -713,7 +714,7 @@ class TestReporter(TestReporterBase):
                       'last_byte_latency': {'avg': '%7.3f' % 0.87475,
                                             'max': '%7.3f' % 1.8,
                                             'pctile': '%7.3f' % 1.8,
-                                            'median': '%7.3f' % 0.7494,
+                                            'median': '%7.3f' % 0.750,
                                             'min': '%6.3f' % 0.2,
                                             'std_dev': '%7.3f' % 0.580485},
                       'worst_first_byte_latency': (1.0, 'txID010'),
@@ -814,7 +815,7 @@ class TestReporter(TestReporterBase):
         # Time series (reqs completed each second
         self.assertDictEqual(dict(
             start=101,
-            start_time=99.19999999999999,
+            start_time=99.2,
             stop=106,
             data=[1, 1, 5, 3, 0, 2],
         ), self.reporter.stats['time_series'])
@@ -861,9 +862,9 @@ TOTAL
        Count:    12 (    1 error;     7 retries: 58.33%)  Average requests per second:   0.2
                             min       max      avg      std_dev  50%-ile                   Worst latency TX ID
        First-byte latency:  0.100 -   1.200    0.508  (  0.386)    0.400  (all obj sizes)  txID004
-       Last-byte  latency:  0.200 -   3.000    1.158  (  0.970)    0.749  (all obj sizes)  txID002
+       Last-byte  latency:  0.200 -   3.000    1.158  (  0.970)    0.750  (all obj sizes)  txID002
        First-byte latency:  0.100 -   1.000    0.450  (  0.377)    0.350  (    tiny objs)  txID010
-       Last-byte  latency:  0.200 -   1.800    0.875  (  0.580)    0.749  (    tiny objs)  txID010
+       Last-byte  latency:  0.200 -   1.800    0.875  (  0.580)    0.750  (    tiny objs)  txID010
        First-byte latency:  0.200 -   1.000    0.567  (  0.330)    0.500  (   small objs)  txID002
        Last-byte  latency:  0.500 -   3.000    1.433  (  1.115)    0.800  (   small objs)  txID002
        First-byte latency:  0.300 -   0.800    0.550  (  0.250)    0.550  (  medium objs)  txID006
@@ -939,7 +940,7 @@ Distribution of requests per worker-ID:  4.000 -   4.000 (avg:   4.000; stddev: 
             'concurrency': '2',
             'start_time': '1970-01-01 00:01:39 UTC',
             'stop_time': '1970-01-01 00:01:46 UTC',
-            'duration': '6.800000000000011',
+            'duration': '6.799999999999997',
             'delete_after': 'None',
             'total_count': '12',
             'total_avg_req_per_s': '0.229885',
@@ -1255,9 +1256,9 @@ TOTAL
        Count:    12 (    1 error;     7 retries: 58.33%)  Average requests per second:   0.2
                             min       max      avg      std_dev  50%-ile                   Worst latency TX ID
        First-byte latency:  0.100 -   1.200    0.508  (  0.386)    0.400  (all obj sizes)  txID004
-       Last-byte  latency:  0.200 -   3.000    1.158  (  0.970)    0.749  (all obj sizes)  txID002
+       Last-byte  latency:  0.200 -   3.000    1.158  (  0.970)    0.750  (all obj sizes)  txID002
        First-byte latency:  0.100 -   1.000    0.450  (  0.377)    0.350  (    tiny objs)  txID010
-       Last-byte  latency:  0.200 -   1.800    0.875  (  0.580)    0.749  (    tiny objs)  txID010
+       Last-byte  latency:  0.200 -   1.800    0.875  (  0.580)    0.750  (    tiny objs)  txID010
        First-byte latency:  0.200 -   1.000    0.567  (  0.330)    0.500  (   small objs)  txID002
        Last-byte  latency:  0.500 -   3.000    1.433  (  1.115)    0.800  (   small objs)  txID002
        First-byte latency:  0.300 -   0.800    0.550  (  0.250)    0.550  (  medium objs)  txID006
@@ -1333,7 +1334,7 @@ Distribution of requests per worker-ID:  4.000 -   4.000 (avg:   4.000; stddev: 
             'concurrency': '2',
             'start_time': '1970-01-01 00:01:39 UTC',
             'stop_time': '1970-01-01 00:01:46 UTC',
-            'duration': '6.800000000000011',
+            'duration': '6.799999999999997',
             'delete_after': '713',
             'total_count': '12',
             'total_avg_req_per_s': '0.229885',

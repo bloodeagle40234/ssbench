@@ -21,6 +21,7 @@ from pprint import pformat
 from datetime import datetime
 from cStringIO import StringIO
 from mako.template import Template
+from decimal import Decimal
 
 import ssbench
 from ssbench.ordered_dict import OrderedDict
@@ -374,13 +375,16 @@ Distribution of requests per worker-ID: ${jobs_per_worker_stats['min']} - ${jobs
                         continue
                     if res_completion_time < completion_time_min:
                         completion_time_min = res_completion_time
-                        start_time = (
-                            res_completion_time - res_last_byte_latency)
+                        start_time = float(
+                            Decimal(str(res_completion_time)) -
+                            Decimal(str(res_last_byte_latency)))
                     if res_completion_time > completion_time_max:
                         completion_time_max = res_completion_time
                     req_completion_seconds[res_completion_time] = \
                         1 + req_completion_seconds.get(res_completion_time, 0)
-                    result['start'] = res_completed_at - res_last_byte_latency
+                    result['start'] = float(
+                        Decimal(str(res_completed_at)) -
+                        Decimal(str(res_last_byte_latency)))
                 else:
                     # report log exceptions
                     logging.warn('calculate_scenario_stats: exception from '
